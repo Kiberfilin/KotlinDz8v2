@@ -18,7 +18,7 @@ interface PostRepository {
     suspend fun getById(id: Long): PostModel?
     suspend fun create(item: PostModel): PostModel
     suspend fun update(id: Long, item: PostModel): PostModel
-    suspend fun removeById(id: Long)
+    suspend fun removeById(id: Long): Boolean
     suspend fun likeById(id: Long): PostModel?
     suspend fun dislikeById(id: Long): PostModel?
     suspend fun repost(item: PostModel): PostModel?
@@ -77,10 +77,11 @@ class PostRepositoryImpl : PostRepository {
     }
 
     @KtorExperimentalAPI
-    override suspend fun removeById(id: Long) {
+    override suspend fun removeById(id: Long): Boolean {
         mutex.withLock {
-            if (!items.removeIf { it.id == id })
-                throw NotFoundException("Не существует такого элемента c id $id, ничего не было удалено.")
+            var wasRemoved = items.removeIf { it.id == id }
+            if (!wasRemoved) throw NotFoundException("Не существует такого элемента c id $id, ничего не было удалено.")
+            return wasRemoved
         }
     }
 
@@ -120,9 +121,6 @@ class PostRepositoryImpl : PostRepository {
 
     @KtorExperimentalAPI
     override suspend fun repost(item: PostModel): PostModel? {
-        //1. Проверить поле source, чтобы оно не было пустым
-        //2. Проверить id поста из поля source, поста с таким id нет, то и репост делать не надо
-        //3. Если всё ок, то сохраняем получившийся репост с нужным id и временем в created
         mutex.withLock {
             var result: PostModel? = null
             with(item) {

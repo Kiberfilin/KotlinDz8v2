@@ -15,6 +15,7 @@ class Video(
     sharedByMe: Boolean,
     postType: PostType,
     source: Post? = null,
+    attachments: ArrayList<Attachment>? = null,
     var url: String? = null
 ) : Post(
     id,
@@ -28,5 +29,6 @@ class Video(
     commentedByMe,
     sharedByMe,
     postType,
-    source
+    source,
+    attachments
 )

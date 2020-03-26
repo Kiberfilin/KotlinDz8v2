@@ -25,8 +25,8 @@ class PostService(private val repo: PostRepository) {
         return repo.update(id, input).getProperPostObject()
     }
 
-    suspend fun removeById(id: Long) {
-        repo.removeById(id)
+    suspend fun removeById(id: Long): Boolean {
+        return repo.removeById(id)
     }
 
     suspend fun likeById(id: Long): Post? {

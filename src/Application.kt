@@ -2,6 +2,8 @@ import service.JWTTokenService
 import service.UserService
 import com.google.gson.ExclusionStrategy
 import com.google.gson.FieldAttributes
+import com.google.gson.Gson
+import exception.ErrorMessage
 import io.ktor.application.*
 import io.ktor.response.*
 import io.ktor.routing.*
@@ -10,6 +12,7 @@ import io.ktor.features.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.jwt
 import io.ktor.gson.*
+import io.ktor.http.content.TextContent
 import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.runBlocking
 import model.PostModel
@@ -33,23 +36,13 @@ fun main(args: Array<String>): Unit = io.ktor.server.cio.EngineMain.main(args)
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
+    println(
+        "Папка аплод: " + (environment.config.propertyOrNull("kotlindz8v2.upload.dir")?.getString() ?: "нету, null")
+    )
     install(PartialContent) {
         // Maximum number of ranges that will be accepted from a HTTP request.
         // If the HTTP request specifies more ranges, they will all be merged into a single range.
         maxRangeCount = 10
-    }
-
-    install(Authentication) {
-        jwt("jwt") {
-            val jwtService by kodein().instance<JWTTokenService>()
-            verifier(jwtService.verifier)
-            val userService by kodein().instance<UserService>()
-
-            validate {
-                val id = it.payload.getClaim("id").asLong()
-                userService.getModelById(id)
-            }
-        }
     }
 
     install(ContentNegotiation) {
@@ -83,14 +76,23 @@ fun Application.module(testing: Boolean = false) {
             call.respond(HttpStatusCode.InternalServerError)
             throw e
         }
+        exception<Exception> { e ->
+            call.respond(HttpStatusCode.Forbidden)
+            throw e
+        }
         exception<NotFoundException> { e ->
             call.respond(HttpStatusCode.NotFound)
+            throw e
+        }
+        exception<BadRequestException> { e ->
+            val jsonMsg = Gson().toJson(e.message?.let { ErrorMessage(it) })
+            call.respond(TextContent(jsonMsg, ContentType.Application.Json, HttpStatusCode.BadRequest))
             throw e
         }
     }
 
     install(KodeinFeature) {
-        constant(tag = "upload-dir") with (environment.config.propertyOrNull("kotlindz8.upload.dir")?.getString()
+        constant(tag = "upload-dir") with (environment.config.propertyOrNull("kotlindz8v2.upload.dir")?.getString()
             ?: throw ConfigurationException("Upload dir is not specified"))
         bind<PasswordEncoder>() with eagerSingleton { BCryptPasswordEncoder() }
         bind<JWTTokenService>() with eagerSingleton { JWTTokenService() }
@@ -102,6 +104,7 @@ fun Application.module(testing: Boolean = false) {
             UserService(instance(), instance(), instance()).apply {
                 runBlocking {
                     this@apply.save("vasya", "password")
+                    this@apply.save("CATS", "password")
                 }
             }
         }
@@ -112,6 +115,19 @@ fun Application.module(testing: Boolean = false) {
                 instance(),
                 instance()
             )
+        }
+    }
+
+    install(Authentication) {
+        jwt("jwt") {
+            val jwtService by kodein().instance<JWTTokenService>()
+            verifier(jwtService.verifier)
+            val userService by kodein().instance<UserService>()
+
+            validate {
+                val id = it.payload.getClaim("id").asLong()
+                userService.getModelById(id)
+            }
         }
     }
 

@@ -14,5 +14,8 @@ open class Post(
     var commentedByMe: Boolean = false,
     var sharedByMe: Boolean = false,
     val postType: PostType,
-    val source: Post? = null
+    val source: Post? = null,
+    var attachments: ArrayList<Attachment>? = null
 )
+
+interface Attachment

@@ -1,16 +1,15 @@
 package service
 
-import dto.users.AuthenticationRequestDto
-import dto.users.AuthenticationResponseDto
-import dto.users.PasswordChangeRequestDto
-import dto.users.UserResponseDto
+import dto.users.*
 import exception.InvalidPasswordException
 import exception.PasswordChangeException
+import io.ktor.features.BadRequestException
 import io.ktor.features.NotFoundException
 import io.ktor.util.KtorExperimentalAPI
 import model.UserModel
 import org.springframework.security.crypto.password.PasswordEncoder
 import repository.UserRepository
+import java.lang.Exception
 
 @KtorExperimentalAPI
 class UserService(
@@ -35,7 +34,7 @@ class UserService(
         // TODO: handle concurrency
         val model = repo.getById(id) ?: throw NotFoundException()
         if (!passwordEncoder.matches(input.old, model.password)) {
-           throw PasswordChangeException("Wrong password!")
+            throw PasswordChangeException("Wrong password!")
         }
         val copy = model.copy(password = passwordEncoder.encode(input.new))
         repo.save(copy)
@@ -49,6 +48,15 @@ class UserService(
 
         val token = tokenService.generate(model.id)
         return AuthenticationResponseDto(token)
+    }
+
+    suspend fun register(input: RegistrationRequestDto): RegistrationResponseDto {
+        if (repo.getByUsername(input.username) == null) {
+            repo.save(UserModel(username = input.username, password = passwordEncoder.encode(input.password)))
+            val model = repo.getByUsername(input.username)
+            val token = tokenService.generate(model!!.id)
+            return RegistrationResponseDto(token)
+        } else throw BadRequestException("Пользователь с таким логином уже зарегистрирован")
     }
 
     suspend fun save(username: String, password: String) {

@@ -17,6 +17,7 @@ class PostModel(
     var sharedByMe: Boolean = false,
     val postType: PostType,
     var source: Post? = null,
+    var attachments: ArrayList<Attachment>? = null,
     var url: String? = null,
     var address: String? = null,
     var coordinates: Coordinates? = Coordinates(),
@@ -42,7 +43,8 @@ class PostModel(
             commentedByMe,
             sharedByMe,
             postType,
-            source
+            source,
+            attachments
         )
         PostType.EVENT -> Event(
             id,
@@ -57,6 +59,7 @@ class PostModel(
             sharedByMe,
             postType,
             source,
+            attachments,
             address,
             coordinates
         )
@@ -73,6 +76,7 @@ class PostModel(
             sharedByMe,
             postType,
             source,
+            attachments,
             url
         )
         PostType.ADD -> Add(
@@ -95,7 +99,8 @@ class PostModel(
             commentedByMe,
             sharedByMe,
             postType,
-            source
+            source,
+            attachments
         )
         else -> throw IllegalArgumentException("Нет такого типа поста!!!")
     }
@@ -113,6 +118,7 @@ fun PostModel.copy() = PostModel(
     this.sharedByMe,
     this.postType,
     this.source,
+    attachments,
     this.url,
     this.address,
     this.coordinates,

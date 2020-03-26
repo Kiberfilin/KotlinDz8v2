@@ -15,6 +15,7 @@ class Event(
     sharedByMe: Boolean,
     postType: PostType,
     source: Post? = null,
+    attachments: ArrayList<Attachment>? = null,
     var address: String?,
     var coordinates: Coordinates? = Coordinates()
 ) : Post(
@@ -29,7 +30,8 @@ class Event(
     commentedByMe,
     sharedByMe,
     postType,
-    source
+    source,
+    attachments
 )
 
 data class Coordinates(

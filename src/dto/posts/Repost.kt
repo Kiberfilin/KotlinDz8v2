@@ -14,7 +14,8 @@ class Repost(
     commentedByMe: Boolean,
     sharedByMe: Boolean,
     postType: PostType,
-    source: Post? = null
+    source: Post? = null,
+    attachments: ArrayList<Attachment>? = null
 ) : Post(
     id,
     author,
@@ -27,5 +28,6 @@ class Repost(
     commentedByMe,
     sharedByMe,
     postType,
-    source
+    source,
+    attachments
 )
