@@ -6,6 +6,8 @@ import exception.PasswordChangeException
 import io.ktor.features.BadRequestException
 import io.ktor.features.NotFoundException
 import io.ktor.util.KtorExperimentalAPI
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import model.UserModel
 import org.springframework.security.crypto.password.PasswordEncoder
 import repository.UserRepository
@@ -17,6 +19,8 @@ class UserService(
     private val tokenService: JWTTokenService,
     private val passwordEncoder: PasswordEncoder
 ) {
+    private val mutex = Mutex()
+
     suspend fun getModelById(id: Long): UserModel? {
         return repo.getById(id)
     }
@@ -31,13 +35,14 @@ class UserService(
     }
 
     suspend fun changePassword(id: Long, input: PasswordChangeRequestDto) {
-        // TODO: handle concurrency
-        val model = repo.getById(id) ?: throw NotFoundException()
-        if (!passwordEncoder.matches(input.old, model.password)) {
-            throw PasswordChangeException("Wrong password!")
+        mutex.withLock {
+            val model = repo.getById(id) ?: throw NotFoundException()
+            if (!passwordEncoder.matches(input.old, model.password)) {
+                throw PasswordChangeException("Wrong password!")
+            }
+            val copy = model.copy(password = passwordEncoder.encode(input.new))
+            repo.save(copy)
         }
-        val copy = model.copy(password = passwordEncoder.encode(input.new))
-        repo.save(copy)
     }
 
     suspend fun authenticate(input: AuthenticationRequestDto): AuthenticationResponseDto {
@@ -60,8 +65,6 @@ class UserService(
     }
 
     suspend fun save(username: String, password: String) {
-        // TODO: check for existence
-        // TODO: handle concurrency
         repo.save(UserModel(username = username, password = passwordEncoder.encode(password)))
         return
     }

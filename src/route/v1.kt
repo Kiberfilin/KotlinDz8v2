@@ -12,7 +12,6 @@ import io.ktor.features.NotFoundException
 import io.ktor.features.ParameterConversionException
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.files
-import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.request.receive
 import io.ktor.request.receiveMultipart
@@ -21,14 +20,12 @@ import io.ktor.routing.*
 import io.ktor.util.KtorExperimentalAPI
 import model.PostModel
 import model.UserModel
-import netscape.security.ForbiddenTargetException
 import org.kodein.di.generic.instance
 import org.kodein.di.ktor.kodein
 import repository.PostRepository
 import service.FileService
 import service.PostService
 import service.UserService
-import java.lang.RuntimeException
 
 class RoutingV1 @KtorExperimentalAPI constructor(
     private val staticPath: String,
@@ -42,8 +39,9 @@ class RoutingV1 @KtorExperimentalAPI constructor(
             route("/api/v1") {
                 route("/") {
                     post("/registration") {
-                        //TODO()
                         val input = call.receive<RegistrationRequestDto>()
+                        val response = userService.register(input)
+                        call.respond(response)
                     }
                     post("/authentication") {
                         val input = call.receive<AuthenticationRequestDto>()
