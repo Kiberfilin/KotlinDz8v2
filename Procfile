@@ -1,0 +1,1 @@
+web: ./build/install/KotlinDz8v2/bin/KotlinDz8v2
